@@ -1,0 +1,389 @@
+<!-- 🔐 ПРИМЕР: БЕЗОПАСНАЯ HTML СТРАНИЦА С АУТЕНТИФИКАЦИЕЙ
+     Сохрани как: client/auth-example.html
+     Используй с: client/firebase-auth.js -->
+
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Безопасная Аутентификация</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            max-width: 400px;
+            width: 90%;
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #333;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 500;
+        }
+        input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        button {
+            width: 100%;
+            padding: 12px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        button:hover {
+            background: #5568d3;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .error {
+            color: #e74c3c;
+            margin-top: 10px;
+            padding: 10px;
+            background: #fadbd8;
+            border-radius: 5px;
+            display: none;
+        }
+        .success {
+            color: #27ae60;
+            margin-top: 10px;
+            padding: 10px;
+            background: #d5f4e6;
+            border-radius: 5px;
+            display: none;
+        }
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+        .tabs button {
+            flex: 1;
+            width: auto;
+            padding: 10px;
+            background: #f0f0f0;
+            color: #333;
+        }
+        .tabs button.active {
+            background: #667eea;
+            color: white;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        #user-section {
+            margin-top: 30px;
+            padding-top: 30px;
+            border-top: 1px solid #ddd;
+        }
+        .profile-section {
+            background: #f9f9f9;
+            padding: 20px;
+            border-radius: 5px;
+            margin-top: 20px;
+        }
+        .lesson-item {
+            background: #f0f0f0;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+            border-left: 4px solid #667eea;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔐 UzdaRus</h1>
+
+        <!-- ВКЛАДКИ: ВХОД / РЕГИСТРАЦИЯ -->
+        <div id="auth-buttons" class="tabs">
+            <button class="tab-btn active" onclick="switchTab('login')">Вход</button>
+            <button class="tab-btn" onclick="switchTab('register')">Регистрация</button>
+        </div>
+
+        <!-- ВКЛАДКА: ВХОД -->
+        <div id="login" class="tab-content active">
+            <div class="form-group">
+                <label for="login-email">Email</label>
+                <input type="email" id="login-email" placeholder="example@mail.com">
+            </div>
+            <div class="form-group">
+                <label for="login-password">Пароль</label>
+                <input type="password" id="login-password" placeholder="••••••••">
+            </div>
+            <button onclick="handleLogin()">Вход</button>
+            <div id="login-error" class="error"></div>
+        </div>
+
+        <!-- ВКЛАДКА: РЕГИСТРАЦИЯ -->
+        <div id="register" class="tab-content">
+            <div class="form-group">
+                <label for="register-name">Имя</label>
+                <input type="text" id="register-name" placeholder="John Doe">
+            </div>
+            <div class="form-group">
+                <label for="register-email">Email</label>
+                <input type="email" id="register-email" placeholder="example@mail.com">
+            </div>
+            <div class="form-group">
+                <label for="register-password">Пароль (мин. 6 символов)</label>
+                <input type="password" id="register-password" placeholder="••••••••">
+            </div>
+            <button onclick="handleRegister()">Регистрация</button>
+            <div id="register-error" class="error"></div>
+            <div id="register-success" class="success"></div>
+        </div>
+
+        <!-- ПРОФИЛЬ ПОЛЬЗОВАТЕЛЯ (видно после входа) -->
+        <div id="user-section"></div>
+
+        <!-- ПРОФИЛЬ (видно после входа) -->
+        <div id="profile-section" class="profile-section" style="display: none;">
+            <h3>👤 Мой профиль</h3>
+            <p id="profile-email"></p>
+            <p id="profile-name"></p>
+            <button onclick="handleLogout()">Выход</button>
+        </div>
+
+        <!-- МОИ УРОКИ (видно после входа) -->
+        <div id="lessons-section" style="display: none; margin-top: 30px;">
+            <h3>📚 Мои уроки</h3>
+            <div class="form-group">
+                <label for="lesson-title">Название урока</label>
+                <input type="text" id="lesson-title" placeholder="e.g., Урок 1">
+            </div>
+            <div class="form-group">
+                <label for="lesson-content">Содержание</label>
+                <textarea id="lesson-content" placeholder="Текст урока..." style="width: 100%; height: 100px; padding: 10px; border: 1px solid #ddd; border-radius: 5px;"></textarea>
+            </div>
+            <button onclick="handleCreateLesson()">Создать урок</button>
+            <div id="lessons-list" style="margin-top: 20px;"></div>
+        </div>
+
+        <!-- КОНТАКТНАЯ ФОРМА -->
+        <div id="contact-section" style="display: none; margin-top: 30px;">
+            <h3>✉️ Отправить сообщение</h3>
+            <div class="form-group">
+                <label for="contact-name">Имя</label>
+                <input type="text" id="contact-name" placeholder="Ваше имя">
+            </div>
+            <div class="form-group">
+                <label for="contact-email">Email</label>
+                <input type="email" id="contact-email" placeholder="your@email.com">
+            </div>
+            <div class="form-group">
+                <label for="contact-message">Сообщение</label>
+                <textarea id="contact-message" placeholder="Ваше сообщение..." style="width: 100%; height: 100px; padding: 10px; border: 1px solid #ddd; border-radius: 5px;"></textarea>
+            </div>
+            <button onclick="handleSendContact()">Отправить</button>
+            <div id="contact-error" class="error"></div>
+            <div id="contact-success" class="success"></div>
+        </div>
+    </div>
+
+    <!-- Импортируй новый безопасный модуль аутентификации -->
+    <script type="module">
+        import authModule, {
+            login,
+            register,
+            logout,
+            getMyLessons,
+            createLesson,
+            sendContactForm,
+            apiCall,
+            currentUser,
+            currentIdToken
+        } from './firebase-auth.js';
+
+        // Глобальные функции для HTML элементов
+        window.switchTab = function(tabName) {
+            // Скрыть все вкладки
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+
+            // Показать выбранную вкладку
+            document.getElementById(tabName).classList.add('active');
+            event.target.classList.add('active');
+        };
+
+        // ВХОД
+        window.handleLogin = async function() {
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
+            const errorEl = document.getElementById('login-error');
+
+            try {
+                await login(email, password);
+                errorEl.style.display = 'none';
+                updateAuthUI();
+            } catch (error) {
+                errorEl.textContent = `❌ ${error.message}`;
+                errorEl.style.display = 'block';
+            }
+        };
+
+        // РЕГИСТРАЦИЯ
+        window.handleRegister = async function() {
+            const name = document.getElementById('register-name').value;
+            const email = document.getElementById('register-email').value;
+            const password = document.getElementById('register-password').value;
+            const errorEl = document.getElementById('register-error');
+            const successEl = document.getElementById('register-success');
+
+            try {
+                if (password.length < 6) {
+                    throw new Error('Пароль должен быть минимум 6 символов');
+                }
+                await register(email, password, name);
+                successEl.textContent = '✅ Регистрация успешна! Вам отправлено письмо подтверждения.';
+                successEl.style.display = 'block';
+                errorEl.style.display = 'none';
+            } catch (error) {
+                errorEl.textContent = `❌ ${error.message}`;
+                errorEl.style.display = 'block';
+                successEl.style.display = 'none';
+            }
+        };
+
+        // ВЫХОД
+        window.handleLogout = async function() {
+            await logout();
+            updateAuthUI();
+        };
+
+        // СОЗДАТЬ УРОК
+        window.handleCreateLesson = async function() {
+            const title = document.getElementById('lesson-title').value;
+            const content = document.getElementById('lesson-content').value;
+
+            try {
+                if (!title || !content) throw new Error('Заполни все поля');
+                await createLesson(title, content);
+                document.getElementById('lesson-title').value = '';
+                document.getElementById('lesson-content').value = '';
+                await loadLessons();
+            } catch (error) {
+                alert(`❌ ${error.message}`);
+            }
+        };
+
+        // ЗАГРУЗИТЬ УРОКИ
+        async function loadLessons() {
+            try {
+                const lessons = await getMyLessons();
+                const list = document.getElementById('lessons-list');
+                list.innerHTML = '';
+                lessons.forEach(lesson => {
+                    const el = document.createElement('div');
+                    el.className = 'lesson-item';
+                    el.innerHTML = `
+                        <strong>${lesson.title}</strong>
+                        <p>${lesson.content}</p>
+                        <small>Создано: ${new Date(lesson.createdAt?.toDate?.()).toLocaleString()}</small>
+                    `;
+                    list.appendChild(el);
+                });
+            } catch (error) {
+                console.error('Ошибка загрузки уроков:', error);
+            }
+        }
+
+        // ОТПРАВИТЬ КОНТАКТНОЕ СООБЩЕНИЕ
+        window.handleSendContact = async function() {
+            const name = document.getElementById('contact-name').value;
+            const email = document.getElementById('contact-email').value;
+            const message = document.getElementById('contact-message').value;
+            const errorEl = document.getElementById('contact-error');
+            const successEl = document.getElementById('contact-success');
+
+            try {
+                if (!name || !email || !message) throw new Error('Заполни все поля');
+                await sendContactForm(name, email, message);
+                successEl.textContent = '✅ Сообщение отправлено!';
+                successEl.style.display = 'block';
+                errorEl.style.display = 'none';
+                document.getElementById('contact-name').value = '';
+                document.getElementById('contact-email').value = '';
+                document.getElementById('contact-message').value = '';
+            } catch (error) {
+                errorEl.textContent = `❌ ${error.message}`;
+                errorEl.style.display = 'block';
+                successEl.style.display = 'none';
+            }
+        };
+
+        // ОБНОВИТЬ UI В ЗАВИСИМОСТИ ОТ СТАТУСА
+        window.updateAuthUI = function() {
+            // Импортируем currentUser из модуля (через setTimeout для синхронизации)
+            setTimeout(() => {
+                const authButtons = document.getElementById('auth-buttons');
+                const profileSection = document.getElementById('profile-section');
+                const lessonsSection = document.getElementById('lessons-section');
+                const contactSection = document.getElementById('contact-section');
+
+                // Проверяем через компонент (нужен доступ к currentUser)
+                const isLoggedIn = document.body.classList.contains('logged-in');
+                
+                // Альтернативный способ: проверяя локальное хранилище или state
+                if (localStorage.getItem('uzdarus-user')) {
+                    authButtons.style.display = 'none';
+                    profileSection.style.display = 'block';
+                    lessonsSection.style.display = 'block';
+                    contactSection.style.display = 'block';
+                    loadLessons();
+                } else {
+                    authButtons.style.display = 'block';
+                    profileSection.style.display = 'none';
+                    lessonsSection.style.display = 'none';
+                    contactSection.style.display = 'none';
+                }
+            }, 100);
+        };
+
+        // Инициализация при загрузке
+        document.addEventListener('DOMContentLoaded', updateAuthUI);
+    </script>
+</body>
+</html>

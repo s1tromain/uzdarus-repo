@@ -1,0 +1,28 @@
+# 🔒 СЕКРЕТЫ - Никогда не коммитьте!
+.env
+.env.local
+.env.*.local
+serviceAccountKey.json
+
+# NODE
+node_modules/
+npm-debug.log
+yarn-error.log
+.npm
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# BUILD
+dist/
+build/
+*.log
+
+# OS
+Thumbs.db
+.DS_Store
+

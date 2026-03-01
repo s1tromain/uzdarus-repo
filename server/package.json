@@ -1,0 +1,22 @@
+{
+  "name": "uzdarus-api",
+  "version": "1.0.0",
+  "description": "Безопасный API для платформы обучения",
+  "type": "module",
+  "main": "src/api.js",
+  "scripts": {
+    "start": "node src/api.js",
+    "dev": "nodemon src/api.js",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "firebase-admin": "^12.0.0",
+    "dotenv": "^16.3.1",
+    "body-parser": "^1.20.2"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.2"
+  }
+}
