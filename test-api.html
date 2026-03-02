@@ -42,7 +42,7 @@
             const responseDiv = document.getElementById('response');
             
             try {
-                const response = await fetch('http://localhost:3000/api/send-contact', {
+                const response = await fetch('/api/send-contact', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
