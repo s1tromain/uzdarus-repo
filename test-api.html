@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test API</title>
+    <style>
+        body { font-family: Arial; padding: 20px; }
+        .form-group { margin: 15px 0; }
+        input, textarea { width: 100%; padding: 8px; }
+        button { padding: 10px 20px; background: #667eea; color: white; border: none; border-radius: 5px; cursor: pointer; }
+        .response { margin-top: 20px; padding: 15px; background: #f0f0f0; border-radius: 5px; }
+        .error { color: red; }
+        .success { color: green; }
+    </style>
+</head>
+<body>
+    <h1>🧪 Test API: send-contact</h1>
+    
+    <div class="form-group">
+        <label>Имя:</label>
+        <input type="text" id="name" value="Test User" />
+    </div>
+    
+    <div class="form-group">
+        <label>Email:</label>
+        <input type="email" id="email" value="test@example.com" />
+    </div>
+    
+    <div class="form-group">
+        <label>Сообщение:</label>
+        <textarea id="message" rows="5">This is a test message from the development API</textarea>
+    </div>
+    
+    <button onclick="sendContact()">Отправить</button>
+    
+    <div id="response" class="response" style="display: none;"></div>
+    
+    <script>
+        async function sendContact() {
+            const name = document.getElementById('name').value;
+            const email = document.getElementById('email').value;
+            const message = document.getElementById('message').value;
+            const responseDiv = document.getElementById('response');
+            
+            try {
+                const response = await fetch('http://localhost:3000/api/send-contact', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        name,
+                        email,
+                        message
+                    })
+                });
+                
+                const data = await response.json();
+                
+                responseDiv.style.display = 'block';
+                if (data.success) {
+                    responseDiv.innerHTML = `<div class="success">✅ Успешно! Сообщение отправлено в Telegram (message_id: ${data.telegramMessageId})</div>`;
+                } else {
+                    responseDiv.innerHTML = `<div class="error">❌ Ошибка: ${data.message}</div>`;
+                }
+            } catch (error) {
+                responseDiv.style.display = 'block';
+                responseDiv.innerHTML = `<div class="error">❌ Ошибка сети: ${error.message}</div>`;
+            }
+        }
+    </script>
+</body>
+</html>
